@@ -2,37 +2,55 @@ from etl.extract.daily_input import extract_daily_data
 from etl.validation.daily_validation import validate_daily_data
 from etl.transform.daily_transform import transform_daily_data
 from etl.load.postgres_loader import load_daily_data
+from etl.config.logging_config import setup_logging
+
+import logging
 
 
 FILE_PATH = "/home/ayush/MyDataHub/etl/data/raw/2026-08-13.json"
-
 USER_ID = 1
+
+
+setup_logging()
+
+logger = logging.getLogger(__name__)
 
 
 def run_pipeline():
 
-    print("Starting MyDataHub ETL...")
+    logger.info("Starting MyDataHub ETL")
 
-    # Extract
-    data = extract_daily_data(FILE_PATH)
-    print("✓ Extract completed")
+    try:
 
-    # Validate
-    if not validate_daily_data(data):
-        print("✗ Validation failed")
-        return
+        # Extract
+        data = extract_daily_data(FILE_PATH)
+        logger.info("Extract completed")
 
-    print("✓ Validation passed")
+        # Validate
+        if not validate_daily_data(data):
+            logger.error("Validation failed")
+            return
 
-    # Transform
-    transformed_data = transform_daily_data(data)
-    print("✓ Transformation completed")
+        logger.info("Validation passed")
 
-    # Load
-    load_daily_data(transformed_data, USER_ID)
-    print("✓ Load completed")
+        # Transform
+        transformed_data = transform_daily_data(data)
+        logger.info("Transformation completed")
 
-    print("MyDataHub ETL completed successfully.")
+        # Load
+        load_daily_data(
+            transformed_data,
+            USER_ID
+        )
+
+        logger.info("Load completed")
+
+        logger.info(
+            "MyDataHub ETL completed successfully"
+        )
+
+    except Exception as error:
+        logger.exception("MyDataHub ETL failed: %s", error)
 
 
 if __name__ == "__main__":

@@ -1,13 +1,22 @@
 import psycopg2
+from pathlib import Path
+import os
+from dotenv import load_dotenv
+import logging
+logger = logging.getLogger(__name__)
 
+root_dir = Path(__file__).resolve().parent.parent.parent
+env_path = root_dir / '.env'
+
+load_dotenv(dotenv_path=env_path)
 
 def get_connection():
     return psycopg2.connect(
-        host="localhost",
-        port=5432,
-        database="mydatahub",
-        user="postgres",
-        password="dhoni"
+        host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", 5432)),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD")
     )
 
 #daily
@@ -16,8 +25,16 @@ def load_daily_log(cursor, data, user_id):
     cursor.execute(
         """
         INSERT INTO daily_logs
-        (user_id, log_date)
+        (
+            user_id,
+            log_date
+        )
         VALUES (%s, %s)
+
+        ON CONFLICT (user_id, log_date)
+        DO UPDATE SET
+            updated_at = CURRENT_TIMESTAMP
+
         RETURNING id;
         """,
         (
@@ -26,7 +43,9 @@ def load_daily_log(cursor, data, user_id):
         )
     )
 
-    return cursor.fetchone()[0]
+    daily_log_id = cursor.fetchone()[0]
+
+    return daily_log_id
 
 #personal
 def load_personal_log(cursor, daily_log_id, data):
@@ -43,7 +62,14 @@ def load_personal_log(cursor, daily_log_id, data):
             mood,
             special_note
         )
-        VALUES (%s, %s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s, %s)
+
+        ON CONFLICT (daily_log_id)
+        DO UPDATE SET
+            wake_up_time = EXCLUDED.wake_up_time,
+            sleep_time = EXCLUDED.sleep_time,
+            mood = EXCLUDED.mood,
+            special_note = EXCLUDED.special_note;
         """,
         (
             daily_log_id,
@@ -68,7 +94,13 @@ def load_office_log(cursor, daily_log_id, data):
             main_work_completed,
             office_learnings
         )
-        VALUES (%s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s)
+
+        ON CONFLICT (daily_log_id)
+        DO UPDATE SET
+            hours_worked = EXCLUDED.hours_worked,
+            main_work_completed = EXCLUDED.main_work_completed,
+            office_learnings = EXCLUDED.office_learnings;
         """,
         (
             daily_log_id,
@@ -92,7 +124,13 @@ def load_learning_log(cursor, daily_log_id, data):
             study_hours,
             project_progress
         )
-        VALUES (%s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s)
+
+        ON CONFLICT (daily_log_id)
+        DO UPDATE SET
+            topic_learned = EXCLUDED.topic_learned,
+            study_hours = EXCLUDED.study_hours,
+            project_progress = EXCLUDED.project_progress;
         """,
         (
             daily_log_id,
@@ -115,7 +153,12 @@ def load_finance_log(cursor, daily_log_id, data):
             daily_expense,
             income_received
         )
-        VALUES (%s, %s, %s);
+        VALUES (%s, %s, %s)
+
+        ON CONFLICT (daily_log_id)
+        DO UPDATE SET
+            daily_expense = EXCLUDED.daily_expense,
+            income_received = EXCLUDED.income_received;
         """,
         (
             daily_log_id,
@@ -139,7 +182,14 @@ def load_food_log(cursor, daily_log_id, data):
             dinner,
             tea_coffee_count
         )
-        VALUES (%s, %s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s, %s)
+
+        ON CONFLICT (daily_log_id)
+        DO UPDATE SET
+            breakfast = EXCLUDED.breakfast,
+            lunch = EXCLUDED.lunch,
+            dinner = EXCLUDED.dinner,
+            tea_coffee_count = EXCLUDED.tea_coffee_count;
         """,
         (
             daily_log_id,
@@ -167,7 +217,16 @@ def load_habit_log(cursor, daily_log_id, data):
             pushups,
             reading_pages
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+
+        ON CONFLICT (daily_log_id)
+        DO UPDATE SET
+            bath_taken = EXCLUDED.bath_taken,
+            hair_washed = EXCLUDED.hair_washed,
+            hair_oil_applied = EXCLUDED.hair_oil_applied,
+            exercise_done = EXCLUDED.exercise_done,
+            pushups = EXCLUDED.pushups,
+            reading_pages = EXCLUDED.reading_pages;
         """,
         (
             daily_log_id,
@@ -233,17 +292,18 @@ def load_daily_data(data, user_id):
 
         connection.commit()
 
-        print(
-            f"Daily data loaded successfully. "
-            f"daily_log_id={daily_log_id}"
+        logger.info(
+            "Daily data loaded successfully | daily_log_id=%s",
+            daily_log_id
         )
 
-    except Exception as error:
+    except Exception:
 
         connection.rollback()
 
-        print("Load failed. Transaction rolled back.")
-        print(error)
+        logger.error(
+            "Load failed. Transaction rolled back."
+        )
 
         raise
 
