@@ -3,11 +3,12 @@ from etl.validation.daily_validation import validate_daily_data
 from etl.transform.daily_transform import transform_daily_data
 from etl.load.postgres_loader import load_daily_data
 from etl.config.logging_config import setup_logging
+from pathlib import Path
 
 import logging
 
 
-FILE_PATH = "/home/ayush/MyDataHub/etl/data/raw/2026-08-13.json"
+DATA_DIRECTORY = "/home/ayush/MyDataHub/etl/data/raw"
 USER_ID = 1
 
 
@@ -16,20 +17,20 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-def run_pipeline():
+def process_file(file_path):
 
-    logger.info("Starting MyDataHub ETL")
+    logger.info("Processing file: %s", file_path)
 
     try:
 
         # Extract
-        data = extract_daily_data(FILE_PATH)
+        data = extract_daily_data(file_path)
         logger.info("Extract completed")
 
         # Validate
         if not validate_daily_data(data):
             logger.error("Validation failed")
-            return
+            return False
 
         logger.info("Validation passed")
 
@@ -46,12 +47,53 @@ def run_pipeline():
         logger.info("Load completed")
 
         logger.info(
-            "MyDataHub ETL completed successfully"
+            "File processed successfully: %s",
+            file_path
         )
 
-    except Exception as error:
-        logger.exception("MyDataHub ETL failed: %s", error)
+        return True
 
+    except Exception as error:
+        logger.exception(
+            "File processing failed: %s",
+            error
+        )
+
+        return False
+
+
+def run_pipeline():
+
+    logger.info("Starting MyDataHub Batch ETL")
+
+    data_directory = Path(DATA_DIRECTORY)
+
+    json_files = sorted(
+        data_directory.glob("*.json")
+    )
+
+    logger.info(
+        "Found %s JSON files",
+        len(json_files)
+    )
+
+    successful_files = 0
+    failed_files = []
+
+    for file_path in json_files:
+
+        result = process_file(file_path)
+
+        if result:
+            successful_files += 1
+        else:
+            failed_files.append(file_path.name)
+
+    logger.info(
+        "Batch completed | Successful: %s | Failed: %s",
+        successful_files,
+        failed_files
+    )
 
 if __name__ == "__main__":
     run_pipeline()

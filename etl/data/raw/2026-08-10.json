@@ -1,0 +1,37 @@
+{
+    "log_date": "2026-08-10",
+    "personal": {
+        "wake_up_time": "07:00",
+        "sleep_time": "23:00",
+        "mood": 4,
+        "special_note": "Good day"
+    },
+    "office": {
+        "hours_worked": 8,
+        "main_work_completed": "Completed tasks",
+        "office_learnings": "Learned Python"
+    },
+    "learning": {
+        "topic_learned": "ETL",
+        "study_hours": 2,
+        "project_progress": "Worked on MyDataHub"
+    },
+    "finance": {
+        "daily_expense": 150,
+        "income_received": 0
+    },
+    "food": {
+        "breakfast": "Poha",
+        "lunch": "Rice",
+        "dinner": "Roti",
+        "tea_coffee_count": 2
+    },
+    "habits": {
+        "bath_taken": true,
+        "hair_washed": false,
+        "hair_oil_applied": false,
+        "exercise_done": true,
+        "pushups": 25,
+        "reading_pages": 15
+    }
+}

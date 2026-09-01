@@ -1,27 +1,27 @@
 {
-  "log_date": "2026-08-09",
+  "log_date": "2026-08-11",
 
   "personal": {
     "wake_up_time": "07:30",
     "sleep_time": "23:15",
-    "mood": 4,
-    "special_note": "Good productive day"
+    "mood": 9,
+    "special_note": "Beautiful productive day"
   },
 
   "office": {
-    "hours_worked": 8.5,
+    "hours_worked": 25,
     "office_learnings": "Learned PostgreSQL views",
     "main_work_completed": "Completed assigned work"
   },
 
   "learning": {
     "topic_learned": "PostgreSQL",
-    "study_hours": 2,
+    "study_hours": 32,
     "project_progress": "Built monthly analytics"
   },
 
   "finance": {
-    "daily_expense": 250,
+    "daily_expense": -250,
     "income_received": 0
   },
 
@@ -37,7 +37,7 @@
     "hair_washed": false,
     "hair_oil_applied": true,
     "exercise_done": true,
-    "pushups": 35,
+    "pushups": 3500,
     "reading_pages": 10
   }
 }
