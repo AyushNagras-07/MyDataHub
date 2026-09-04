@@ -1,4 +1,16 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Environment variables
 .env
 .env.test
+.env.*
+!.env.example
+
+# Virtual environments
+myenv/
+venv/
+
+# Logs
+*.log

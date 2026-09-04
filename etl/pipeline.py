@@ -3,19 +3,20 @@ from etl.validation.daily_validation import validate_daily_data
 from etl.transform.daily_transform import transform_daily_data
 from etl.load.postgres_loader import load_daily_data
 from etl.config.logging_config import setup_logging
-from pathlib import Path
 from etl.utils.file_handler import move_file
 import os
 from etl.utils.retry import retry_operation
-
-
+import time
 import logging
 
-RAW_FOLDER = "/home/ayush/MyDataHub/etl/data/raw"
-PROCESSED_FOLDER = "/home/ayush/MyDataHub/etl/data/processed"
-FAILED_FOLDER = "/home/ayush/MyDataHub/etl/data/failed"
-DATA_DIRECTORY = "/home/ayush/MyDataHub/etl/data/raw"
-USER_ID = 1
+from etl.config.settings import (
+    RAW_FOLDER,
+    PROCESSED_FOLDER,
+    FAILED_FOLDER,
+    USER_ID,
+    MAX_RETRY_ATTEMPTS,
+    RETRY_DELAY
+)
 
 
 setup_logging()
@@ -44,38 +45,40 @@ def process_file(file_path):
         transformed_data = transform_daily_data(data)
         logger.info("Transformation completed")
 
-        # Load
-        load_daily_data(
-            transformed_data,
-            USER_ID
+        # Load with retry
+        def load_operation():
+            load_daily_data(
+                transformed_data,
+                USER_ID
+            )
+
+        retry_operation(
+            load_operation,
+            max_attempts=MAX_RETRY_ATTEMPTS,
+            delay=RETRY_DELAY
         )
 
         logger.info("Load completed")
 
-        logger.info(
-            "File processed successfully: %s",
-            file_path
-        )
-
         return True
 
-    except Exception as error:
+    except Exception:
+
         logger.exception(
             "File processing failed: %s",
-            error
+            file_path
         )
 
         return False
 
 
 def run_pipeline():
+    start_time = time.time()
 
     logger.info("Starting MyDataHub Batch ETL")
 
-    data_directory = Path(DATA_DIRECTORY)
-
     json_files = sorted(
-        data_directory.glob("*.json")
+        RAW_FOLDER.glob("*.json")
     )
 
     logger.info(
@@ -88,91 +91,70 @@ def run_pipeline():
 
     for file_path in json_files:
 
-        logger.info("Processing file: %s", file_path)
+        success = process_file(file_path)
 
-        try:
+        if success:
 
-            # Extract
-            data = extract_daily_data(file_path)
-            logger.info("Extract completed")
-
-            # Validate
-            if not validate_daily_data(data):
-
-                logger.error("Validation failed")
-
-                failed_files.append(
-                    os.path.basename(file_path)
-                )
-
-                move_file(
-                    file_path,
-                    FAILED_FOLDER
-                )
-
-                continue
-
-            logger.info("Validation passed")
-
-            # Transform
-            transformed_data = transform_daily_data(data)
-            logger.info("Transformation completed")
-
-            # Load
-            # Load with retry
-
-            def load_operation():
-
-                load_daily_data(
-                    transformed_data,
-                    USER_ID
-                )
-
-
-            retry_operation(
-                load_operation,
-                max_attempts=3,
-                delay=2
-            )
-
-            logger.info("Load completed")
-
-
-            # Move successful file
             move_file(
                 file_path,
                 PROCESSED_FOLDER
             )
 
             successful_files.append(
-                os.path.basename(file_path)
+                file_path.name
             )
 
             logger.info(
-                "File processed successfully: %s",
-                file_path
+                "File moved to processed: %s",
+                file_path.name
             )
 
-        except Exception as error:
-
-            logger.exception(
-                "File processing failed: %s",
-                file_path
-            )
-
-            failed_files.append(
-                os.path.basename(file_path)
-            )
+        else:
 
             move_file(
                 file_path,
                 FAILED_FOLDER
             )
-    logger.info(
-        "Batch completed | Successful: %s | Failed: %s",
-        len(successful_files),
-        failed_files
+
+            failed_files.append(
+                file_path.name
+            )
+
+            logger.info(
+                "File moved to failed: %s",
+                file_path.name
+            )
+
+
+    execution_time = time.time() - start_time
+
+    total_files = len(json_files)
+    successful_count = len(successful_files)
+    failed_count = len(failed_files)
+
+    success_rate = (
+        (successful_count / total_files) * 100
+        if total_files > 0
+        else 0
     )
+
+    logger.info("=" * 50)
+    logger.info("BATCH PIPELINE SUMMARY")
+    logger.info("=" * 50)
+
+    logger.info("Total files: %s", total_files)
+    logger.info("Successful files: %s", successful_count)
+    logger.info("Failed files: %s", failed_count)
+    logger.info("Success rate: %.2f%%", success_rate)
+    logger.info("Execution time: %.2f seconds", execution_time)
+
+    if failed_files:
+        logger.info(
+            "Failed files list: %s",
+            failed_files
+        )
+
+    logger.info("=" * 50)
 
 if __name__ == "__main__":
     run_pipeline()
