@@ -8,7 +8,10 @@ import os
 from etl.utils.retry import retry_operation
 import time
 import logging
-
+from etl.load.pipeline_run_loader import (
+    create_pipeline_run,
+    complete_pipeline_run
+)
 from etl.config.settings import (
     RAW_FOLDER,
     PROCESSED_FOLDER,
@@ -76,6 +79,12 @@ def run_pipeline():
     start_time = time.time()
 
     logger.info("Starting MyDataHub Batch ETL")
+    pipeline_run_id = create_pipeline_run()
+
+    logger.info(
+        "Pipeline run created | run_id=%s",
+        pipeline_run_id
+    )
 
     json_files = sorted(
         RAW_FOLDER.glob("*.json")
@@ -131,6 +140,14 @@ def run_pipeline():
     total_files = len(json_files)
     successful_count = len(successful_files)
     failed_count = len(failed_files)
+    if failed_count == 0:
+        status = "SUCCESS"
+
+    elif successful_count > 0:
+        status = "PARTIAL_SUCCESS"
+
+    else:
+        status = "FAILED"
 
     success_rate = (
         (successful_count / total_files) * 100
@@ -155,6 +172,14 @@ def run_pipeline():
         )
 
     logger.info("=" * 50)
+    complete_pipeline_run(
+        pipeline_run_id=pipeline_run_id,
+        total_files=total_files,
+        successful_files=successful_count,
+        failed_files=failed_count,
+        execution_time=execution_time,
+        status=status
+    )
 
 if __name__ == "__main__":
     run_pipeline()
