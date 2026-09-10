@@ -38,8 +38,9 @@ def process_file(file_path):
         logger.info("Extract completed")
 
         # Validate
-        if not validate_daily_data(data):
-            logger.error("Validation failed")
+        valid, errors = validate_daily_data(data)
+        if not valid:
+            logger.error("Validation failed: %s", errors)
             return False
 
         logger.info("Validation passed")

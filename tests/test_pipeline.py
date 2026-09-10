@@ -18,7 +18,7 @@ def test_process_file_success(
         "log_date": "2026-08-13"
     }
 
-    mock_validate.return_value = True
+    mock_validate.return_value = (True, [])
 
     mock_transform.return_value = {
         "log_date": "2026-08-13"
