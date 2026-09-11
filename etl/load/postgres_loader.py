@@ -92,7 +92,8 @@ def load_office_log(cursor, daily_log_id, data):
             daily_log_id,
             hours_worked,
             main_work_completed,
-            office_learnings
+            office_learnings,
+            ayush
         )
         VALUES (%s, %s, %s, %s)
 
@@ -243,47 +244,62 @@ def load_habit_log(cursor, daily_log_id, data):
 #main function
 def load_daily_data(data, user_id):
 
-    connection = get_connection()
+    try:
+        connection = get_connection()
+
+    except Exception as error:
+
+        logger.error(
+            "LOAD failed | database connection | reason=%s",
+            error
+        )
+
+        raise
 
     try:
         cursor = connection.cursor()
 
+        current_table = "daily_logs"
         daily_log_id = load_daily_log(
             cursor,
             data,
             user_id
         )
 
+        current_table = "personal_logs"
         load_personal_log(
             cursor,
             daily_log_id,
             data
         )
 
+        current_table = "office_logs"
         load_office_log(
             cursor,
             daily_log_id,
             data
         )
 
+        current_table = "learning_log"
         load_learning_log(
             cursor,
             daily_log_id,
             data
         )
 
+        current_table = "finance_log"
         load_finance_log(
             cursor,
             daily_log_id,
             data
         )
-
+        current_table = "food_log"
         load_food_log(
             cursor,
             daily_log_id,
             data
         )
-
+        current_table = "habit_log"
         load_habit_log(
             cursor,
             daily_log_id,
@@ -297,9 +313,15 @@ def load_daily_data(data, user_id):
             daily_log_id
         )
 
-    except Exception:
+    except Exception as error:
 
         connection.rollback()
+
+        logger.error(
+            "LOAD failed | table=%s | reason=%s",
+            current_table,
+            error
+        )
 
         logger.error(
             "Load failed. Transaction rolled back."

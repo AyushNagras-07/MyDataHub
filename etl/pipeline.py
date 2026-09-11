@@ -31,25 +31,33 @@ def process_file(file_path):
 
     logger.info("Processing file: %s", file_path)
 
-    try:
+    stage = "EXTRACT"
 
-        # Extract
+    try:
         data = extract_daily_data(file_path)
         logger.info("Extract completed")
 
-        # Validate
+        stage = "VALIDATION"
+
         valid, errors = validate_daily_data(data)
+
         if not valid:
-            logger.error("Validation failed: %s", errors)
+            logger.error(
+                "VALIDATION failed | file=%s | errors=%s",
+                file_path,
+                errors
+            )
             return False
 
         logger.info("Validation passed")
 
-        # Transform
+        stage = "TRANSFORMATION"
+
         transformed_data = transform_daily_data(data)
         logger.info("Transformation completed")
 
-        # Load with retry
+        stage = "LOAD"
+
         def load_operation():
             load_daily_data(
                 transformed_data,
@@ -66,15 +74,16 @@ def process_file(file_path):
 
         return True
 
-    except Exception:
+    except Exception as error:
 
         logger.exception(
-            "File processing failed: %s",
-            file_path
+            "%s failed | file=%s | reason=%s",
+            stage,
+            file_path,
+            error
         )
 
         return False
-
 
 def run_pipeline():
     start_time = time.time()

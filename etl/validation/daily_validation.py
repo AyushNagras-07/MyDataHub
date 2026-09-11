@@ -36,18 +36,18 @@ def validate_daily_data(data):
     daily_expense = data.get("finance", {}).get("daily_expense")
     if daily_expense is not None:
         if not _is_number(daily_expense) or daily_expense < 0:
-            errors.append(f"finance.daily_expense cannot be negative, got{daily_expense}")
+            errors.append(f"finance.daily_expense cannot be negative, got {daily_expense}")
 
     income_received = data.get("finance", {}).get("income_received")
     if income_received is not None:
         if not _is_number(income_received) or income_received < 0:
-            errors.append(f"money can't receive negative money sorry -{income_received}")
+            errors.append(f"money can't receive negative money sorry - {income_received}")
 
     # food
     tea_coffee_count = data.get("food", {}).get("tea_coffee_count")
     if tea_coffee_count is not None:
         if not _is_number(tea_coffee_count) or tea_coffee_count < 0 or tea_coffee_count > 50:
-            errors.append(f"food.tea_coffee_count must be between 0 and 50, got{tea_coffee_count}")
+            errors.append(f"food.tea_coffee_count must be between 0 and 50, got {tea_coffee_count}")
 
     # habits
     pushups = data.get("habits", {}).get("pushups")
@@ -58,7 +58,7 @@ def validate_daily_data(data):
     reading_pages = data.get("habits", {}).get("reading_pages")
     if reading_pages is not None:
         if not _is_number(reading_pages) or reading_pages < 0 or reading_pages > 10000:
-            errors.append(f"You can not read that much pages in one day -{reading_pages}")
+            errors.append(f"You can not read that much pages in one day - {reading_pages}")
 
     return len(errors) == 0, errors
 
