@@ -1,4 +1,8 @@
 def transform_daily_data(data):
+    if not isinstance(data, dict):
+        raise TypeError(
+            "Transformation input must be a dictionary"
+        )
 
     return {
         "log_date":data.get("log_date",{}),

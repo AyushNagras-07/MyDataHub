@@ -33,7 +33,10 @@ def test_valid_daily_data():
         }
     }
 
-    assert validate_daily_data(data) is True
+    valid, errors = validate_daily_data(data)
+
+    assert valid is True
+    assert errors == []
 
 def test_invalid_mood():
 
@@ -45,7 +48,11 @@ def test_invalid_mood():
         }
     }
 
-    assert validate_daily_data(data1) is False
+    valid, errors = validate_daily_data(data1)
+
+    assert valid is False
+    assert len(errors) == 1
+    assert "mood" in errors[0]
 
 def test_negative_expense():
 
@@ -57,4 +64,35 @@ def test_negative_expense():
         }
     }
 
-    assert validate_daily_data(data) is False
+    valid, errors = validate_daily_data(data)
+
+    assert valid is False
+    assert len(errors) == 1
+    assert "daily_expense" in errors[0]
+
+def test_multiple_validation_errors():
+
+    data = {
+        "log_date": "2026-08-09",
+
+        "personal": {
+            "mood": 9
+        },
+
+        "office": {
+            "hours_worked": 30
+        },
+
+        "learning": {
+            "study_hours": -5
+        },
+
+        "finance": {
+            "daily_expense": -100
+        }
+    }
+
+    valid, errors = validate_daily_data(data)
+
+    assert valid is False
+    assert len(errors) == 4
