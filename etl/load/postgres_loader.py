@@ -92,8 +92,7 @@ def load_office_log(cursor, daily_log_id, data):
             daily_log_id,
             hours_worked,
             main_work_completed,
-            office_learnings,
-            ayush
+            office_learnings
         )
         VALUES (%s, %s, %s, %s)
 
