@@ -10,7 +10,8 @@ import time
 import logging
 from etl.load.pipeline_run_loader import (
     create_pipeline_run,
-    complete_pipeline_run
+    complete_pipeline_run,
+    record_pipeline_error
 )
 from etl.config.settings import (
     RAW_FOLDER,
@@ -27,7 +28,7 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-def process_file(file_path):
+def process_file(file_path,pipeline_run_id):
 
     logger.info("Processing file: %s", file_path)
 
@@ -46,6 +47,13 @@ def process_file(file_path):
                 "VALIDATION failed | file=%s | errors=%s",
                 file_path,
                 errors
+            )
+            record_pipeline_error(
+                pipeline_run_id=pipeline_run_id,
+                file_name=file_path.name,
+                stage="VALIDATION",
+                error_type="ValidationError",
+                error_message="; ".join(errors)
             )
             return False
 
@@ -82,6 +90,14 @@ def process_file(file_path):
             file_path,
             error
         )
+        record_pipeline_error(
+            pipeline_run_id=pipeline_run_id,
+            file_name=file_path.name,
+            stage=stage,
+            error_type=type(error).__name__,
+            error_message=str(error)
+        )
+
 
         return False
 
@@ -110,7 +126,7 @@ def run_pipeline():
 
     for file_path in json_files:
 
-        success = process_file(file_path)
+        success = process_file(file_path,pipeline_run_id)
 
         if success:
 

@@ -25,7 +25,8 @@ def test_process_file_success(
     }
 
     result = process_file(
-        "dummy_file.json"
+        "dummy_file.json",
+        pipeline_run_id=1
     )
 
     assert result is True
@@ -77,7 +78,7 @@ def test_run_pipeline_moves_successful_file(
     monkeypatch.setattr(
         pipeline,
         "process_file",
-        lambda file_path: True
+        lambda file_path, pipeline_run_id: True
     )
 
     # Run pipeline
@@ -138,7 +139,7 @@ def test_run_pipeline_moves_failed_file(
     monkeypatch.setattr(
         pipeline,
         "process_file",
-        lambda file_path: False
+        lambda file_path, pipeline_run_id: False
     )
 
     # Run pipeline
