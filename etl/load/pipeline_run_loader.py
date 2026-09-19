@@ -45,6 +45,54 @@ def create_pipeline_run():
         cursor.close()
         connection.close()
 
+def record_pipeline_error(
+    pipeline_run_id,
+    file_name,
+    stage,
+    error_type,
+    error_message
+):
+
+    connection = get_connection()
+
+    try:
+
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO pipeline_errors
+            (
+                pipeline_run_id,
+                file_name,
+                stage,
+                error_type,
+                error_message
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (
+                pipeline_run_id,
+                file_name,
+                stage,
+                error_type,
+                error_message
+            )
+        )
+
+        connection.commit()
+
+    except Exception:
+
+        connection.rollback()
+
+        raise
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
 
 def complete_pipeline_run(
     pipeline_run_id,
