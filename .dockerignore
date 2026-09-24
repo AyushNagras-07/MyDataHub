@@ -1,0 +1,10 @@
+.env
+.env.test
+.git/
+.gitignore
+__pycache__/
+*.py[cod]
+.pytest_cache/
+etl/data/
+tests/
+README.md

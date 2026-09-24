@@ -1,3 +1,4 @@
+from etl.utils.retry import retry_operation
 from etl.extract.daily_input import extract_daily_data
 from etl.validation.daily_validation import validate_daily_data
 from etl.transform.daily_transform import transform_daily_data
@@ -5,7 +6,6 @@ from etl.load.postgres_loader import load_daily_data
 from etl.config.logging_config import setup_logging
 from etl.utils.file_handler import move_file
 import os
-from etl.utils.retry import retry_operation
 import time
 import logging
 from etl.load.pipeline_run_loader import (
@@ -105,7 +105,11 @@ def run_pipeline():
     start_time = time.time()
 
     logger.info("Starting MyDataHub Batch ETL")
-    pipeline_run_id = create_pipeline_run()
+    pipeline_run_id = retry_operation(
+        create_pipeline_run,
+        max_attempts=5,
+        delay=2
+    )
 
     logger.info(
         "Pipeline run created | run_id=%s",

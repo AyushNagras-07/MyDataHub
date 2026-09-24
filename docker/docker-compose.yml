@@ -1,0 +1,47 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: mydatahub-postgres
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U postgres -d mydatahub -tAc \"SELECT 1 FROM docker_init_complete LIMIT 1\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  etl:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+
+    container_name: mydatahub-etl
+
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    volumes:
+      - ../etl/data:/app/etl/data
+
+volumes:
+  postgres_data:
