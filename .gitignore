@@ -5,6 +5,7 @@ __pycache__/
 # Environment variables
 .env
 .env.test
+docker/.env
 .env.*
 !.env.example
 
