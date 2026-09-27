@@ -1,3 +1,4 @@
+import psycopg2
 from etl.utils.retry import retry_operation
 from etl.extract.daily_input import extract_daily_data
 from etl.validation.daily_validation import validate_daily_data
@@ -21,7 +22,10 @@ from etl.config.settings import (
     MAX_RETRY_ATTEMPTS,
     RETRY_DELAY
 )
-
+RETRYABLE_DB_ERRORS = (
+    psycopg2.OperationalError,
+    psycopg2.InterfaceError,
+)
 
 setup_logging()
 
@@ -75,7 +79,8 @@ def process_file(file_path,pipeline_run_id):
         retry_operation(
             load_operation,
             max_attempts=MAX_RETRY_ATTEMPTS,
-            delay=RETRY_DELAY
+            delay=RETRY_DELAY,
+            retry_exceptions=RETRYABLE_DB_ERRORS
         )
 
         logger.info("Load completed")
@@ -108,7 +113,8 @@ def run_pipeline():
     pipeline_run_id = retry_operation(
         create_pipeline_run,
         max_attempts=5,
-        delay=2
+        delay=2,
+        retry_exceptions=RETRYABLE_DB_ERRORS
     )
 
     logger.info(

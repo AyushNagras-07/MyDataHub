@@ -5,15 +5,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def retry_operation(operation, max_attempts=3, delay=2):
+def retry_operation(
+    operation,
+    max_attempts=3,
+    delay=2,
+    retry_exceptions=(Exception,)
+):
 
     for attempt in range(1, max_attempts + 1):
 
         try:
-
             return operation()
 
-        except Exception as error:
+        except retry_exceptions as error:
 
             logger.warning(
                 "Attempt %s/%s failed: %s",
