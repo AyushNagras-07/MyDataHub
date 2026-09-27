@@ -39,7 +39,6 @@ def test_run_pipeline_moves_successful_file(
     monkeypatch
 ):
 
-    # Temporary folders
     raw_folder = tmp_path / "raw"
     processed_folder = tmp_path / "processed"
     failed_folder = tmp_path / "failed"
@@ -48,14 +47,12 @@ def test_run_pipeline_moves_successful_file(
     processed_folder.mkdir()
     failed_folder.mkdir()
 
-    # Create test JSON file
     test_file = raw_folder / "test.json"
 
     test_file.write_text(
         '{"log_date": "2026-09-01"}'
     )
 
-    # Replace pipeline folders with temporary folders
     monkeypatch.setattr(
         pipeline,
         "RAW_FOLDER",
@@ -74,17 +71,26 @@ def test_run_pipeline_moves_successful_file(
         failed_folder
     )
 
-    # Mock successful processing
+    monkeypatch.setattr(
+        pipeline,
+        "create_pipeline_run",
+        lambda: 1
+    )
+
+    monkeypatch.setattr(
+        pipeline,
+        "complete_pipeline_run",
+        lambda **kwargs: None
+    )
+
     monkeypatch.setattr(
         pipeline,
         "process_file",
         lambda file_path, pipeline_run_id: True
     )
 
-    # Run pipeline
     pipeline.run_pipeline()
 
-    # Assertions
     assert not test_file.exists()
 
     assert (
@@ -133,6 +139,18 @@ def test_run_pipeline_moves_failed_file(
         pipeline,
         "FAILED_FOLDER",
         failed_folder
+    )
+
+    monkeypatch.setattr(
+        pipeline,
+        "create_pipeline_run",
+        lambda: 1
+    )
+
+    monkeypatch.setattr(
+        pipeline,
+        "complete_pipeline_run",
+        lambda **kwargs: None
     )
 
     # Mock failed processing
@@ -185,6 +203,18 @@ def test_run_pipeline_with_empty_raw_folder(
         pipeline,
         "FAILED_FOLDER",
         failed_folder
+    )
+
+    monkeypatch.setattr(
+        pipeline,
+        "create_pipeline_run",
+        lambda: 1
+    )
+
+    monkeypatch.setattr(
+        pipeline,
+        "complete_pipeline_run",
+        lambda **kwargs: None
     )
 
     pipeline.run_pipeline()

@@ -2,15 +2,13 @@ from etl.load.pipeline_run_loader import (
     create_pipeline_run,
     complete_pipeline_run
 )
-from etl.load.postgres_loader import get_connection
 
 
-def test_create_pipeline_run():
+def test_create_pipeline_run(db_connection):
 
     pipeline_run_id = create_pipeline_run()
 
-    connection = get_connection()
-    cursor = connection.cursor()
+    cursor = db_connection.cursor()
 
     cursor.execute(
         """
@@ -25,9 +23,6 @@ def test_create_pipeline_run():
 
     result = cursor.fetchone()
 
-    cursor.close()
-    connection.close()
-
     assert result is not None
 
     status, started_at = result
@@ -35,7 +30,21 @@ def test_create_pipeline_run():
     assert status == "RUNNING"
     assert started_at is not None
 
-def test_complete_pipeline_run():
+    # Cleanup test pipeline run
+    cursor.execute(
+        """
+        DELETE FROM pipeline_runs
+        WHERE id = %s;
+        """,
+        (pipeline_run_id,)
+    )
+
+    db_connection.commit()
+
+    cursor.close()
+
+
+def test_complete_pipeline_run(db_connection):
 
     pipeline_run_id = create_pipeline_run()
 
@@ -48,8 +57,7 @@ def test_complete_pipeline_run():
         status="PARTIAL_SUCCESS"
     )
 
-    connection = get_connection()
-    cursor = connection.cursor()
+    cursor = db_connection.cursor()
 
     cursor.execute(
         """
@@ -68,9 +76,6 @@ def test_complete_pipeline_run():
 
     result = cursor.fetchone()
 
-    cursor.close()
-    connection.close()
-
     assert result is not None
 
     (
@@ -88,3 +93,16 @@ def test_complete_pipeline_run():
     assert failed_files == 1
     assert float(execution_time) == 2.5
     assert status == "PARTIAL_SUCCESS"
+
+    # Cleanup test pipeline run
+    cursor.execute(
+        """
+        DELETE FROM pipeline_runs
+        WHERE id = %s;
+        """,
+        (pipeline_run_id,)
+    )
+
+    db_connection.commit()
+
+    cursor.close()

@@ -212,4 +212,9 @@ def run_pipeline():
     )
 
 if __name__ == "__main__":
+    from pathlib import Path
+    from dotenv import load_dotenv
+
+    load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
+
     run_pipeline()

@@ -1,14 +1,8 @@
 import psycopg2
-from pathlib import Path
 import os
-from dotenv import load_dotenv
 import logging
 logger = logging.getLogger(__name__)
 
-root_dir = Path(__file__).resolve().parent.parent.parent
-env_path = root_dir / '.env'
-
-load_dotenv(dotenv_path=env_path)
 
 def get_connection():
     return psycopg2.connect(
