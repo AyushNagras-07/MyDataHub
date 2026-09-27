@@ -1,6 +1,6 @@
 from etl.extract import daily_input
 import re
-
+from datetime import datetime
 
 def _is_number(n):
     return isinstance(n, (int, float))
@@ -11,8 +11,15 @@ def validate_daily_data(data):
 
     log_date = data.get("log_date")
 
-    if log_date is None or not re.match(r"^\d{4}-\d{2}-\d{2}$", log_date):
-        errors.append("not proper date format it should be yyyy-mm-dd")
+    if log_date is None:
+        errors.append("log_date is required")
+    else:
+        try:
+            datetime.strptime(log_date, "%Y-%m-%d")
+        except (TypeError, ValueError):
+            errors.append(
+                f"log_date must be a valid date in YYYY-MM-DD format, got {log_date}"
+            )
 
     # personal.mood: 1-5 (scale)
     mood = data.get("personal", {}).get("mood")
@@ -46,8 +53,8 @@ def validate_daily_data(data):
     # food
     tea_coffee_count = data.get("food", {}).get("tea_coffee_count")
     if tea_coffee_count is not None:
-        if not _is_number(tea_coffee_count) or tea_coffee_count < 0 or tea_coffee_count > 50:
-            errors.append(f"food.tea_coffee_count must be between 0 and 50, got {tea_coffee_count}")
+        if not _is_number(tea_coffee_count) or tea_coffee_count < 0 or tea_coffee_count > 20:
+            errors.append(f"food.tea_coffee_count must be between 0 and 20, got {tea_coffee_count}")
 
     # habits
     pushups = data.get("habits", {}).get("pushups")

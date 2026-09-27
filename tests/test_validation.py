@@ -96,3 +96,33 @@ def test_multiple_validation_errors():
 
     assert valid is False
     assert len(errors) == 4
+
+def test_invalid_calendar_date():
+    data = {
+        "log_date": "2026-13-45"
+    }
+
+    valid, errors = validate_daily_data(data)
+
+    assert valid is False
+    assert any("log_date" in error for error in errors)
+
+def test_invalid_day_for_month():
+    data = {
+        "log_date": "2026-02-31"
+    }
+
+    valid, errors = validate_daily_data(data)
+
+    assert valid is False
+    assert any("log_date" in error for error in errors)
+
+def test_valid_date():
+    data = {
+        "log_date": "2026-09-27"
+    }
+
+    valid, errors = validate_daily_data(data)
+
+    assert valid is True
+    assert errors == []
